@@ -11,7 +11,7 @@ using System.Text;  // 🔹 Add this for Swagger Security
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🟢 **1️⃣ Configure CORS (Dynamic Allowed Origins)**
+// Configure CORS (Dynamic Allowed Origins)**
 //var allowedOrigins = builder.Environment.IsDevelopment()? "*"    : builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
 
 builder.Services.AddCors(options =>
