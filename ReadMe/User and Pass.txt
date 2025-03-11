@@ -1,0 +1,65 @@
+
+{
+  "emailOrContactNo": "9471837437",
+  "password": "Roshan@123"
+}
+
+{
+  "emailOrContactNo": "roshan@knowledgeflex.com",
+  "password": "Roshan@123"
+}
+
+//-- To create user, take single single object
+[
+	{
+		"name": "Roshan",
+		"contactNo": "9471837437",
+		"email": "roshan@knowledgeflex.com",
+		"gender": "male",
+		"dob": "1997-05-16",
+		"password": "Roshan@123"
+	},
+	{
+		"name": "Amit Sharma",
+		"email": "amit.sharma@gmail.com",
+		"contactNo": "9876543210",
+		"password": "Amit@123",
+		"gender": "Male",
+		"dob": "1992-06-18"
+	},
+	{
+		"name": "Priya Verma",
+		"email": "priya.verma@gmail.com",
+		"contactNo": "8765432109",
+		"password": "Priya@123",
+		"gender": "Female",
+		"dob": "1989-12-05"
+	},
+	{
+		"name": "Rajesh Kumar",
+		"email": "rajesh.kumar@gmail.com",
+		"contactNo": "7654321098",
+		"password": "Rajesh@123",
+		"gender": "Male",
+		"dob": "1995-03-22"
+	},
+	{
+		"name": "Neha Gupta",
+		"email": "neha.gupta@gmail.com",
+		"contactNo": "6543210987",
+		"password": "Neha@123",
+		"gender": "Female",
+		"dob": "1991-08-14"
+	},
+	{
+		"name": "Vikram Singh",
+		"email": "vikram.singh@gmail.com",
+		"contactNo": "5432109876",
+		"password": "Vikram@123",
+		"gender": "Male",
+		"dob": "1985-11-30"
+	}
+]
+
+dotnet ef migrations add InitialCreate3
+dotnet ef database update
