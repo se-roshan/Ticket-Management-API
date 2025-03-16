@@ -21,4 +21,12 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.5.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="Assset\ProfilePicture\" />
+    <None Remove="Assset\UploadedFiles\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Assset\ProfilePicture\" />
+    <Folder Include="Assset\UploadedFiles\" />
+  </ItemGroup>
 </Project>

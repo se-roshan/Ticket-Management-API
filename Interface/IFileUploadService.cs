@@ -8,6 +8,9 @@ namespace WebAPI_Code_First.Interface
     public interface IFileUploadService
     {
         Task<int> SaveFileRecord(FileUpload fileUpload);
+        Task<int> SaveProfileFileRecord(FileUpload fileUpload);
         Task<List<UserProfilePics>> GetFilesByUserId(int userId, string FilePath);
+
+        Task<bool> RemoveProfileImage(int userId);
     }
 }

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Threading.Tasks;
+using WebAPI_Code_First.Entities;
 using WebAPI_Code_First.Interface;
 using WebAPI_Code_First.Model;
 using WebAPI_Code_First.Utilities;
@@ -41,19 +42,24 @@ namespace WebAPI_Code_First.Controllers
 
         //-- Get User Details with Profile image 
         [HttpGet("GetUserDetails")]
-        //[Authorize]
+        [Authorize]
         public async Task<IActionResult> GetUserDetails()
         {
-            // Define the upload folder path
-            string uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), "UploadedFiles");
+            //// Define the upload folder path
+            //string uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), "UploadedFiles");
 
-            // Ensure the directory exists
-            if (!Directory.Exists(uploadFolder))
-            {
-                Directory.CreateDirectory(uploadFolder);
-            }
+            //// Ensure the directory exists
+            //if (!Directory.Exists(uploadFolder))
+            //{
+            //    Directory.CreateDirectory(uploadFolder);
+            //}
 
-            var response = await _userService.GetAllUserDetails(uploadFolder);
+            //var response = await _userService.GetAllUserDetails(uploadFolder);
+
+            // Construct Base URL (Example: http://localhost:5000)
+            string baseUrl = $"{Request.Scheme}://{Request.Host.Value}";
+
+            var response = await _userService.GetAllUserDetails(baseUrl);
 
             if (response != null && response.Any())
             {
@@ -64,7 +70,35 @@ namespace WebAPI_Code_First.Controllers
         }
 
 
+        //-- Get User Details with Profile image on the basic of token
+        [HttpGet("GetUserDetail")]
+        [Authorize]
+        public async Task<IActionResult> GetUserDetail()
+        {
+            var userIdClaim = User.Claims.FirstOrDefault(x => x.Type == "NameIdentifier");
+            if (userIdClaim == null)
+            {
+                return Unauthorized(new APIMessage(HttpStatusCode.Unauthorized, "Invalid token. User not identified."));
+            }
+            var userId = Convert.ToInt32(userIdClaim.Value); 
+
+            // Construct Base URL (Example: http://localhost:5000)
+            string baseUrl = $"{Request.Scheme}://{Request.Host.Value}";
+
+            var response = await _userService.GetUserDetailById(baseUrl, userId);
+
+            if (response != null)
+            {
+                return Ok(new APIMessage(HttpStatusCode.OK, Constants.SUCCESSMSG, response));
+            }
+
+            return NotFound(new APIMessage(HttpStatusCode.NotFound, Constants.FAILUREMSG, response));
+        }
+
+
+
         [HttpPost("AddUpdateRole")]
+        [Authorize]
         public async Task<IActionResult> AddUpdateRole([FromBody] RoleModel role)
         {
             if (role == null)
@@ -79,6 +113,7 @@ namespace WebAPI_Code_First.Controllers
         }
 
         [HttpGet("GetRoles")]
+        [Authorize]
         public async Task<IActionResult> GetRoles()
         {
             var roles = await _userService.GetRoles();
@@ -89,6 +124,19 @@ namespace WebAPI_Code_First.Controllers
             return Ok(new ResponseModel<List<RoleModel>>(200, Constants.SUCCESSMSG, roles));
         }
 
+        [HttpPost("AddUpdateUser")]
+        [Authorize]
+        public async Task<IActionResult> AddUpdateUser([FromBody] UserListModel userList)
+        {
+            var userId = await _userService.AddUpdatedUser(userList);
+
+            if (userId == 0)
+                return BadRequest(new ResponseModel<object>(400, "Failed to add or update user.", null));
+
+            string message = userList.Id > 0 ? "User updated successfully." : "User added successfully.";
+
+            return Ok(new ResponseModel<int>(200, message, userId));
+        }
 
     }
 }

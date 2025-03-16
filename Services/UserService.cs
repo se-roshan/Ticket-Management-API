@@ -57,27 +57,72 @@ namespace WebAPI_Code_First.Services
         }
 
         //-- Update User 
-        public async Task<int> UpdateUser(UserListModel updatedUser)
-        {
-            var user = await _context.Users.FindAsync(updatedUser.Id);
-            if (user == null) return 0;
+        //public async Task<int> addUpdatedUser(UserListModel addUpdatedUser)
+        //{
+        //    var user = await _context.Users.FindAsync(addUpdatedUser.Id);
+        //    if (user == null) return 0;
 
-            user.Name = updatedUser.Name ?? user.Name;
-            user.ContactNo = updatedUser.ContactNo ?? user.ContactNo;
-            user.Email = updatedUser.Email ?? user.Email;
-            user.Gender = updatedUser.Gender ?? user.Gender;
-            user.IsActive = updatedUser.IsActive;
-            user.UpdatedBy = updatedUser.UpdatedBy;
-            user.UpdatedDateTime = DateTime.Now;
+        //    user.Name = addUpdatedUser.Name ?? user.Name;
+        //    user.ContactNo = addUpdatedUser.ContactNo ?? user.ContactNo;
+        //    user.Email = addUpdatedUser.Email ?? user.Email;
+        //    user.Gender = addUpdatedUser.Gender ?? user.Gender;
+        //    user.IsActive = addUpdatedUser.IsActive;
+        //    user.UpdatedBy = addUpdatedUser.UpdatedBy;
+        //    user.UpdatedDateTime = DateTime.Now;
+
+        //    await _context.SaveChangesAsync();
+        //    return user.Id;
+        //}
+        public async Task<int> AddUpdatedUser(UserListModel addUpdatedUser)
+        {
+            int id = 0; // Variable to store the user ID
+
+            if (addUpdatedUser.Id > 0) // Update existing user
+            {
+                var user = await _context.Users.FindAsync(addUpdatedUser.Id);
+                if (user == null) return 0;
+
+                user.Name = addUpdatedUser.Name ?? user.Name;
+                user.ContactNo = addUpdatedUser.ContactNo ?? user.ContactNo;
+                user.Email = addUpdatedUser.Email ?? user.Email;
+                user.Gender = addUpdatedUser.Gender ?? user.Gender;
+                user.DOB = addUpdatedUser.DOB ?? user.DOB;
+                user.IsActive = addUpdatedUser.IsActive;
+                user.UpdatedBy = addUpdatedUser.UpdatedBy;
+                user.UpdatedDateTime = DateTime.Now;
+
+                id = user.Id;
+            }
+            else // Add new user
+            {
+                var newUser = new User
+                {
+                    Name = addUpdatedUser.Name,
+                    ContactNo = addUpdatedUser.ContactNo,
+                    Email = addUpdatedUser.Email,
+                    Gender = addUpdatedUser.Gender,
+                    DOB = addUpdatedUser.DOB,
+                    IsActive = addUpdatedUser.IsActive,
+                    CreatedBy = addUpdatedUser.CreatedBy,
+                    CreatedDateTime = DateTime.Now,
+                    UpdatedBy = addUpdatedUser.UpdatedBy,
+                    UpdatedDateTime = DateTime.Now
+                };
+
+                _context.Users.Add(newUser);
+                await _context.SaveChangesAsync(); // Save before accessing newUser.Id
+
+                id = newUser.Id; // Retrieve the newly created user's ID
+            }
 
             await _context.SaveChangesAsync();
-            return user.Id;
+            return id;
         }
 
         //-- Get All User Details
 
         //-- 3rd way 3.35 s
-        public async Task<List<UserProfileModel>> GetAllUserDetails(string uploadFolder)
+        public async Task<List<UserProfileModel>> GetAllUserDetails(string baseUrl /*string uploadFolder*/)
         {
             // Fetch users & file uploads separately (single DB calls)
             var users = await _context.Users.AsNoTracking().ToListAsync();
@@ -99,7 +144,8 @@ namespace WebAPI_Code_First.Services
                     {
                         Id = f.Id,
                         UserId = f.UserId,
-                        FilePath = Path.Combine(uploadFolder, f.FileName), // ✅ Construct full file path
+                        //FilePath = Path.Combine(uploadFolder, f.FileName), // ✅ Construct full file path
+                        FilePath = $"{baseUrl}/uploads/{f.FileName}", // ✅ Convert to Web URL
                         FileName = f.FileName,
                         IsCurrentProfileImage = f.IsCurrentProfileImage,
                         IsActive = f.IsActive,
@@ -182,6 +228,34 @@ namespace WebAPI_Code_First.Services
         //    return userList;
         //}
 
+
+        //-- GetUserDetailById
+        public async Task<UserProfilePictureModel> GetUserDetailById(string baseUrl, int userId)
+        {
+            var user = await _context.Users
+                .Where(u => u.Id == userId)
+                .Select(u => new UserProfilePictureModel
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email,
+                    ContactNo = u.ContactNo,
+                    LastPasswordChange = u.LastPasswordChange,
+                    Gender = u.Gender,
+                    DOB = string.IsNullOrEmpty(u.DOB) ? (DateTime?)null : DateTime.Parse(u.DOB), 
+                    IsActive = u.IsActive,
+                    ProfileImage = _context.FileUploads
+                        .Where(f => f.UserId == u.Id && f.IsCurrentProfileImage)
+                        .Select(f => $"{baseUrl}/profile/{f.FileName}")
+                        .FirstOrDefault() // Return `null` if no current profile image exists
+                })
+                .FirstOrDefaultAsync();
+
+            return user;
+        }
+
+
+        //--
         public async Task<int> AddUpdateRole(RoleModel role)
         {
             if (role == null)

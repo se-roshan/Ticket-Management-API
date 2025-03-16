@@ -17,15 +17,17 @@ namespace WebAPI_Code_First.Services
             _context = context;
         }
 
-        ////-- Save File Record
-        //public async Task<int> SaveFileRecord(FileUpload fileUpload)
-        //{ 
-        //    _context.FileUploads.Add(fileUpload);
-        //    await _context.SaveChangesAsync();
-        //    return fileUpload.Id;
-        //}
         //-- Save File Record
         public async Task<int> SaveFileRecord(FileUpload fileUpload)
+        {
+            _context.FileUploads.Add(fileUpload);
+
+            await _context.SaveChangesAsync();
+            return fileUpload.Id;
+        }
+
+        //-- Save Profile File Record
+        public async Task<int> SaveProfileFileRecord(FileUpload fileUpload)
         {
             //-- Get Last Profile Picture for the User
             var lastProfilePic = await _context.FileUploads
@@ -41,27 +43,14 @@ namespace WebAPI_Code_First.Services
                 lastProfilePic.UpdatedDateTime = DateTime.Now;
             }
 
-            //-- Insert New Profile Picture Record
-            fileUpload.IsCurrentProfileImage = true;
             _context.FileUploads.Add(fileUpload);
 
             await _context.SaveChangesAsync();
             return fileUpload.Id;
         }
 
-
         //-- Get Files by User ID
-        //public async Task<List<FileUpload>> GetFilesByUserId(int userId)
-        //{
-        //    return await _context.FileUploads
-        //        .Where(f => f.UserId == userId)
-        //        .ToListAsync();
-        //}
-
-
-
-        //-- Get Files by User ID
-        public async Task<List<UserProfilePics>> GetFilesByUserId(int userId, string FilePath)
+        public async Task<List<UserProfilePics>> GetFilesByUserId(int userId, string baseUrl)
         {
             try
             {
@@ -76,7 +65,10 @@ namespace WebAPI_Code_First.Services
                 {
                     Id = f.Id,
                     UserId = f.UserId,
-                    FilePath = FilePath,
+                    //FilePath = FilePath,
+                    // Use 'profile' for profile images, 'uploads' for other files
+                    FilePath = f.IsCurrentProfileImage ? $"{baseUrl}/profile/{f.FileName}" : $"{baseUrl}/uploads/{f.FileName}",
+
                     FileName = f.FileName,
                     IsCurrentProfileImage = f.IsCurrentProfileImage,
                     IsActive = f.IsActive,
@@ -96,6 +88,26 @@ namespace WebAPI_Code_First.Services
             }
         }
 
+        //--
+        public async Task<bool> RemoveProfileImage(int userId)
+        {
+            var fileUpload = await _context.FileUploads
+                .Where(f => f.IsCurrentProfileImage == true && f.UserId == userId)
+                .FirstOrDefaultAsync(); // Corrected the query
+
+            if (fileUpload == null)
+            {
+                return false; // No active profile image found
+            }
+
+            // Remove the image by marking it as inactive
+            fileUpload.IsCurrentProfileImage = false;
+            fileUpload.UpdatedBy = userId;
+            fileUpload.UpdatedDateTime = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
 
 
     }

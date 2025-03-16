@@ -8,6 +8,7 @@ using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Http.Features;
 using WebAPI_Code_First.Interface;
 using System.Text;  // 🔹 Add this for Swagger Security
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -124,10 +125,62 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+var uploadFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Assset/UploadedFiles");
+var profileFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Assset/ProfilePicture");
+
+// ✅ Ensure directories exist before the app starts
+if (!Directory.Exists(uploadFolderPath))
+{
+    Directory.CreateDirectory(uploadFolderPath);
+}
+if (!Directory.Exists(profileFolderPath))
+{
+    Directory.CreateDirectory(profileFolderPath);
+}
+// ✅ Serve Static Files After Ensuring Directories Exist
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadFolderPath),
+    RequestPath = "/uploads"
+});
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(profileFolderPath),
+    RequestPath = "/profile"
+});
+
+////-- Serve Static Files (For Uploaded Images) 
+//app.UseStaticFiles(new StaticFileOptions
+//{
+//    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Assset/UploadedFiles")),
+//    RequestPath = "/uploads"
+//});
+
+//app.UseStaticFiles(new StaticFileOptions
+//{
+//    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Assset/ProfilePicture")),
+//    RequestPath = "/profile"
+//});
+
+
 //-- Configure Middleware
+//app.UseHttpsRedirection();
+//app.UseCors("AllowFrontend"); // Apply CORS Here
+//app.UseAuthentication();
+//app.UseAuthorization();
+//app.MapControllers();
+//app.Run();
+
 app.UseHttpsRedirection();
-app.UseCors("AllowFrontend"); // 🔴 **Apply CORS Here**
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapControllers();
+app.UseCors("AllowFrontend"); // Apply CORS before authentication
+
+app.UseRouting(); // Enable route matching
+app.UseAuthentication(); // Ensure authentication is applied
+app.UseAuthorization(); // Apply authorization
+
+app.UseEndpoints(endpoints => {
+    endpoints.MapControllers(); // Execute API controller routes
+});
+
 app.Run();
